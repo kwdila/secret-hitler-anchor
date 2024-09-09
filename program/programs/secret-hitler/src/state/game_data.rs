@@ -43,7 +43,7 @@ impl Space for GameData {
     + 9 * 3         // Option<u64/i64>
     + 2 * 5         // Option<u8>
     + 8             // i64
-    + 1 * 6         // u8
+    + 6         // u8
     + 1             // GameState
     + 2             // Option<PlayerCount>
     + 1             // bool

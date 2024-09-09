@@ -59,66 +59,60 @@ pub struct LeaveGame<'info> {
 
 impl<'info> LeaveGame<'info> {
     pub fn remove_player(&mut self) -> Result<()> {
-        match self.game_data.entry_deposit {
-            Some(amount) => {
-                let accounts = Transfer {
-                    to: self.player.to_account_info(),
-                    from: self
-                        .deposit_vault
-                        .as_ref()
-                        .ok_or(GameErrorCode::DepositNotFound)?
-                        .to_account_info(), //this is checked in game_data account constraints
-                };
+        if let Some(amount) = self.game_data.entry_deposit {
+            let accounts = Transfer {
+                to: self.player.to_account_info(),
+                from: self
+                    .deposit_vault
+                    .as_ref()
+                    .ok_or(GameErrorCode::DepositNotFound)?
+                    .to_account_info(), //this is checked in game_data account constraints
+            };
 
-                let game_key = self.game_data.key().to_bytes();
-                let seeds = [
-                    b"deposit_vault",
-                    game_key.as_ref(),
-                    &[self
-                        .game_data
-                        .deposit_vault_bump
-                        .ok_or(GameErrorCode::DepositNotFound)?],
-                ];
-                let signer_seeds = &[&seeds[..]];
-                let ctx = CpiContext::new_with_signer(
-                    self.system_program.to_account_info(),
-                    accounts,
-                    signer_seeds,
-                );
-                transfer(ctx, amount)?
-            }
-            None => (),
+            let game_key = self.game_data.key().to_bytes();
+            let seeds = [
+                b"deposit_vault",
+                game_key.as_ref(),
+                &[self
+                    .game_data
+                    .deposit_vault_bump
+                    .ok_or(GameErrorCode::DepositNotFound)?],
+            ];
+            let signer_seeds = &[&seeds[..]];
+            let ctx = CpiContext::new_with_signer(
+                self.system_program.to_account_info(),
+                accounts,
+                signer_seeds,
+            );
+            transfer(ctx, amount)?
         }
 
-        match self.game_data.bet_amount {
-            Some(amount) => {
-                let accounts = Transfer {
-                    to: self.player.to_account_info(),
-                    from: self
-                        .bet_vault
-                        .as_ref()
-                        .ok_or(GameErrorCode::BetNotFound)?
-                        .to_account_info(), //this is checked in game_data account constraints
-                };
+        if let Some(amount) = self.game_data.bet_amount {
+            let accounts = Transfer {
+                to: self.player.to_account_info(),
+                from: self
+                    .bet_vault
+                    .as_ref()
+                    .ok_or(GameErrorCode::BetNotFound)?
+                    .to_account_info(), //this is checked in game_data account constraints
+            };
 
-                let game_key = self.game_data.key().to_bytes();
-                let seeds = [
-                    b"bet_vault",
-                    game_key.as_ref(),
-                    &[self
-                        .game_data
-                        .bet_vault_bump
-                        .ok_or(GameErrorCode::BetNotFound)?],
-                ];
-                let signer_seeds = &[&seeds[..]];
-                let ctx = CpiContext::new_with_signer(
-                    self.system_program.to_account_info(),
-                    accounts,
-                    signer_seeds,
-                );
-                transfer(ctx, amount)?
-            }
-            None => (),
+            let game_key = self.game_data.key().to_bytes();
+            let seeds = [
+                b"bet_vault",
+                game_key.as_ref(),
+                &[self
+                    .game_data
+                    .bet_vault_bump
+                    .ok_or(GameErrorCode::BetNotFound)?],
+            ];
+            let signer_seeds = &[&seeds[..]];
+            let ctx = CpiContext::new_with_signer(
+                self.system_program.to_account_info(),
+                accounts,
+                signer_seeds,
+            );
+            transfer(ctx, amount)?
         }
 
         let index = self

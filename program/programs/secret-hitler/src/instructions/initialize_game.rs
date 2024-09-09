@@ -101,38 +101,32 @@ impl<'info> InitializeGame<'info> {
             bumps.bet_vault,
         )?;
 
-        match self.game_data.entry_deposit {
-            Some(amount) => {
-                let accounts = Transfer {
-                    from: self.host.to_account_info(),
-                    to: self
-                        .deposit_vault
-                        .as_ref()
-                        .ok_or(GameErrorCode::DepositNotFound)?
-                        .to_account_info(), //this is checked in game_data account constraints
-                };
+        if let Some(amount) = self.game_data.entry_deposit {
+            let accounts = Transfer {
+                from: self.host.to_account_info(),
+                to: self
+                    .deposit_vault
+                    .as_ref()
+                    .ok_or(GameErrorCode::DepositNotFound)?
+                    .to_account_info(), //this is checked in game_data account constraints
+            };
 
-                let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
-                transfer(ctx, amount)?
-            }
-            None => (),
+            let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
+            transfer(ctx, amount)?
         }
 
-        match self.game_data.bet_amount {
-            Some(amount) => {
-                let accounts = Transfer {
-                    from: self.host.to_account_info(),
-                    to: self
-                        .bet_vault
-                        .as_ref()
-                        .ok_or(GameErrorCode::BetNotFound)?
-                        .to_account_info(), //this is checked in game_data account constraints
-                };
+        if let Some(amount) = self.game_data.bet_amount {
+            let accounts = Transfer {
+                from: self.host.to_account_info(),
+                to: self
+                    .bet_vault
+                    .as_ref()
+                    .ok_or(GameErrorCode::BetNotFound)?
+                    .to_account_info(), //this is checked in game_data account constraints
+            };
 
-                let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
-                transfer(ctx, amount)?
-            }
-            None => (),
+            let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
+            transfer(ctx, amount)?
         }
 
         self.player_data.set_inner(PlayerData {
