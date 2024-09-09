@@ -70,7 +70,7 @@ impl<'info> EliminatePlayer<'info> {
 
         // Remove players in reverse order to avoid shifting errors
         indices_to_remove.into_iter().rev().for_each(|index| {
-            game.active_players.remove(index as usize);
+            game.active_players.remove(index);
         });
 
         if inactive_goverment {
