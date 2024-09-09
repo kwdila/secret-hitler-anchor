@@ -1,19 +1,18 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { SecretHitler } from "../target/types/secret_hitler";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, Signer } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { assert } from "chai";
 
 describe("secret-hitler", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
   const program = anchor.workspace.SecretHitler as Program<SecretHitler>;
-  const payer = provider.wallet as anchor.Wallet;
 
   let maxPlayers = 6;
   let turnDuration = new anchor.BN(120);
 
-  let depositAmount = new anchor.BN(1 * LAMPORTS_PER_SOL);
+  let depositAmount = new anchor.BN(LAMPORTS_PER_SOL);
   let betAmount = new anchor.BN(0.5 * LAMPORTS_PER_SOL);
 
   let host = anchor.web3.Keypair.generate();
@@ -98,6 +97,19 @@ describe("secret-hitler", () => {
       gameAfter.bump.toString(),
       gameDataBump.toString(),
       "wrong bump detected",
+    );
+    let depositVaultAfter =
+      await provider.connection.getAccountInfo(depositVault);
+    assert.strictEqual(
+      depositVaultAfter.lamports.toString(),
+      depositAmount.toString(),
+      "Deposit in vault mismatch",
+    );
+    let betVaultAfter = await provider.connection.getAccountInfo(betVault);
+    assert.strictEqual(
+      betVaultAfter.lamports.toString(),
+      betAmount.toString(),
+      "Bet in vault mismatch",
     );
   });
   it("Init player_1 game without deposit and bet", async () => {
@@ -238,8 +250,6 @@ describe("secret-hitler", () => {
     );
   });
   it("try to eliminate player", async () => {
-    let gameBefore = await program.account.gameData.fetch(gameData);
-
     await program.methods
       .eliminateInactivePlayer()
       .accountsPartial({
@@ -343,7 +353,7 @@ describe("secret-hitler", () => {
       "wrong game state detected",
     );
   });
-  it("president Encat policy", async () => {
+  it("president Enact policy", async () => {
     let game = await program.account.gameData.fetch(gameData);
     let key = game.activePlayers[game.currentPresidentIndex];
     // find president player keypair
@@ -377,7 +387,7 @@ describe("secret-hitler", () => {
       "wrong game state detected",
     );
   });
-  it("Chancellor Encat policy", async () => {
+  it("Chancellor Enact policy", async () => {
     let game = await program.account.gameData.fetch(gameData);
     let key = game.activePlayers[game.currentChancellorIndex];
     // find chancellor player keypair
@@ -483,7 +493,7 @@ describe("secret-hitler", () => {
       "wrong game state detected",
     );
   });
-  it("president Encat policy", async () => {
+  it("president Enact policy", async () => {
     let game = await program.account.gameData.fetch(gameData);
     let key = game.activePlayers[game.currentPresidentIndex];
     // find president player keypair

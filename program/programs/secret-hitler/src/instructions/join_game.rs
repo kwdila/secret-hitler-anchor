@@ -1,9 +1,11 @@
 use anchor_lang::{
     prelude::*,
-    system_program::{transfer, Transfer},
 };
 
-use crate::state::{GameData, PlayerData};
+use crate::{
+    helpers::deposit_into_vault,
+    state::{GameData, PlayerData},
+};
 use crate::{GameErrorCode, GameState};
 
 #[derive(Accounts)]
@@ -61,32 +63,18 @@ pub struct JoinGame<'info> {
 
 impl<'info> JoinGame<'info> {
     pub fn add_player(&mut self, bumps: JoinGameBumps) -> Result<()> {
+        // Handle entry deposit
         if let Some(amount) = self.game_data.entry_deposit {
-            let accounts = Transfer {
-                from: self.player.to_account_info(),
-                to: self
-                    .deposit_vault
-                    .as_ref()
-                    .ok_or(GameErrorCode::DepositNotFound)?
-                    .to_account_info(), // this is checked in game_data account constraints
-            };
-
-            let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
-            transfer(ctx, amount)?
+            if let Some(vault) = &self.deposit_vault {
+                deposit_into_vault(amount, &self.player, vault, &self.system_program)?;
+            }
         }
 
+        // Handle bet amount
         if let Some(amount) = self.game_data.bet_amount {
-            let accounts = Transfer {
-                from: self.player.to_account_info(),
-                to: self
-                    .bet_vault
-                    .as_ref()
-                    .ok_or(GameErrorCode::BetNotFound)?
-                    .to_account_info(), // this is checked in game_data account constraints
-            };
-
-            let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
-            transfer(ctx, amount)?
+            if let Some(vault) = &self.bet_vault {
+                deposit_into_vault(amount, &self.player, vault, &self.system_program)?;
+            }
         }
 
         self.game_data.active_players.push(self.player.key());

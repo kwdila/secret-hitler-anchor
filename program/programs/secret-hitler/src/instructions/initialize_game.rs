@@ -1,10 +1,8 @@
-use anchor_lang::{
-    prelude::*,
-    system_program::{transfer, Transfer},
-};
+use anchor_lang::prelude::*;
 
 use crate::{
     constants::{MAX_PLAYERS, MINI_TURN_DURATION, MIN_PLAYERS},
+    helpers::deposit_into_vault,
     state::{game_data::GameData, player_data::PlayerData},
     GameErrorCode,
 };
@@ -101,32 +99,18 @@ impl<'info> InitializeGame<'info> {
             bumps.bet_vault,
         )?;
 
+        // Handle entry deposit
         if let Some(amount) = self.game_data.entry_deposit {
-            let accounts = Transfer {
-                from: self.host.to_account_info(),
-                to: self
-                    .deposit_vault
-                    .as_ref()
-                    .ok_or(GameErrorCode::DepositNotFound)?
-                    .to_account_info(), //this is checked in game_data account constraints
-            };
-
-            let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
-            transfer(ctx, amount)?
+            if let Some(vault) = &self.deposit_vault {
+                deposit_into_vault(amount, &self.host, vault, &self.system_program)?;
+            }
         }
 
+        // Handle bet amount
         if let Some(amount) = self.game_data.bet_amount {
-            let accounts = Transfer {
-                from: self.host.to_account_info(),
-                to: self
-                    .bet_vault
-                    .as_ref()
-                    .ok_or(GameErrorCode::BetNotFound)?
-                    .to_account_info(), //this is checked in game_data account constraints
-            };
-
-            let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
-            transfer(ctx, amount)?
+            if let Some(vault) = &self.bet_vault {
+                deposit_into_vault(amount, &self.host, vault, &self.system_program)?;
+            }
         }
 
         self.player_data.set_inner(PlayerData {
