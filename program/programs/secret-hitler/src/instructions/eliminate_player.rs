@@ -69,9 +69,9 @@ impl<'info> EliminatePlayer<'info> {
         }
 
         // Remove players in reverse order to avoid shifting errors
-        for index in indices_to_remove.iter().rev() {
-            game.active_players.remove(*index as usize);
-        }
+        indices_to_remove.into_iter().rev().for_each(|index| {
+            game.active_players.remove(index as usize);
+        });
 
         if inactive_goverment {
             game.next_president()?;
