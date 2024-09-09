@@ -1,8 +1,5 @@
-use anchor_lang::{context, prelude::*};
-use secret_hitler::{
-    enums::{GameState, PlayerCount},
-    id,
-};
+use anchor_lang::prelude::*;
+use secret_hitler::id;
 use solana_program_test::*;
 use solana_sdk::{
     native_token::LAMPORTS_PER_SOL,
