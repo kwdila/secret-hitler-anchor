@@ -1,16 +1,17 @@
-# Solana Game Preset
+# Secret Hitler Board Game
+This is an on chain implementation of the popular board game secret hitler. It provides functionality for players to play the game according to the official rules found in ``Secret_Hitler_Rules.pdf``. 
 
-This game is ment as a starter game for on chain games.
-There is a js and a unity client for this game and both are talking to a solana anchor program.
+It takles the issue of innactivity by providing insentives for players to kick out innactive players instead of using a server or a cron job found in ``program/src/eliminate_lpayer.rs``.
 
-This game uses gum session keys for auto approval of transactions.
+Role assignment and deck shuffling are to be implemented off chain with a rust server to keep critical secret game data hiddent. This could be implemented using ZKPs on chain to eliminate the need of a server in the future.
+
+the program has been tested using the solana-test-validator with TS and some tests using rust and solana-program-test crate which allow for forwarding the slot.
+
+This game is ment as a starter game for on chain games which have off chain elements.
+There will be a js client for this game that is talking to a solana anchor program.
+
+This game will use gum session keys for auto approval of transactions.
 Note that neither the program nor session keys are audited. Use at your own risk.
-
-# How to run this example
-
-## Quickstart
-
-The unity client and the js client are both connected to the same program and should work out of the box connecting to the already deployed program.
 
 ### Js Client
 
@@ -53,14 +54,6 @@ Next js client
 To connect to local host from Unity add these links on the wallet holder game object:
 http://localhost:8899
 ws://localhost:8900
-
-## Video walkthroughs
-
-Here are two videos explaining the energy logic and session keys:
-Session keys:
-https://www.youtube.com/watch?v=oKvWZoybv7Y&t=17s&ab_channel=Solana
-Energy system:
-https://www.youtube.com/watch?v=YYQtRCXJBgs&t=4s&ab_channel=Solana
 
 ### Session keys
 
