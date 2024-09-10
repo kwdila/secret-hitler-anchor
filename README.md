@@ -1,11 +1,12 @@
 # Secret Hitler Board Game
-This is an on chain implementation of the popular board game secret hitler. It provides functionality for players to play the game according to the official rules found in ``Secret_Hitler_Rules.pdf``. 
 
-It takles the issue of innactivity by providing insentives for players to kick out innactive players instead of using a server or a cron job found in ``program/src/eliminate_lpayer.rs``.
+This is an on chain implementation of the popular board game secret hitler. It provides functionality for players to play the game according to the official rules found in `Secret_Hitler_Rules.pdf`.
+
+It takles the issue of innactivity by providing insentives for players to kick out innactive players instead of using a server or a cron job found in `program/src/eliminate_lpayer.rs`.
 
 Role assignment and deck shuffling are to be implemented off chain with a rust server to keep critical secret game data hiddent. This could be implemented using ZKPs on chain to eliminate the need of a server in the future.
 
-the program has been tested using the solana-test-validator with TS and some tests using rust and solana-program-test crate which allow for forwarding the slot.
+the program has been tested using the solana-test-validator with TS found in `program/programs/secret-hitler/tests` and some tests using rust and solana-program-test crate which allow for forwarding the slot found in `program/tests/`.
 
 This game is ment as a starter game for on chain games which have off chain elements.
 There will be a js client for this game that is talking to a solana anchor program.
