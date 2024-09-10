@@ -11,7 +11,7 @@ This document outlines the on-chain implementation of the popular board game Sec
 
 ### Testing
 
-- **Frameworks Used**: Solana test validator, TypeScript tests (`anchor-program/programs/secret-hitler/tests`), and Rust tests with `solana-program-test`.
+- **Frameworks Used**: Solana test validator, [TypeScript test files](./anchor-program/programs/secret-hitler/tests), and [Rust test setup](./anchor-program/tests/README.md).
 
 ### Client and Server Integration
 
