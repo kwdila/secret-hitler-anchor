@@ -1,5 +1,7 @@
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
 
+mod db;
+
 #[get("/games")]
 async fn get_all_games() -> impl Responder {
     HttpResponse::Ok().body("meow all games")
