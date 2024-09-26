@@ -29,3 +29,11 @@ impl<'info> StartGame<'info> {
         Ok(())
     }
 }
+
+
+/* 
+try{
+backend
+}
+anchor program 
+*/

@@ -1,10 +1,8 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Deserialize, Serialize)]
+#[derive()]
 pub struct InitGameRequest {
     pub game_pubkey: String,
 }
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 pub struct Game {
     pub uuid: String,
     pub pubkey: String,

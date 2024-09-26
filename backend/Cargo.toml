@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-web = "4.9.0"
 serde = "1.0.210"
-surrealdb = "1.5.5"
-uuid = "1.10.0"
+solana-client = "2.0.10"
+solana-sdk = "2.0.10"
+sqlx = { version = "0.6.2", features = ["runtime-tokio-native-tls", "sqlite"] }
+tokio = { version = "1.40.0", features = ["macros"] }
