@@ -4,6 +4,8 @@ This document outlines the on-chain implementation of the popular board game Sec
 
 ## Game Overview
 
+Program on Devnet: FxKWd5DzXvHPVfrGo3DvXgTeG25TGUGUAFvjQ1zSMp1B
+
 ### Key Features
 
 - **Inactivity Management**: On-chain functionality to handle inactive players and manage their removal, reducing reliance on external servers or cron jobs.
