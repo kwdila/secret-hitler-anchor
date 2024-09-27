@@ -1,15 +1,6 @@
-#[derive()]
-pub struct InitGameRequest {
-    pub game_pubkey: String,
-}
-#[derive(Debug)]
-pub struct Game {
-    pub uuid: String,
-    pub pubkey: String,
-}
+use sqlx::FromRow;
 
-impl Game {
-    pub fn new(uuid: String, pubkey: String) -> Game {
-        Game { uuid, pubkey }
-    }
+#[derive(Debug, Clone, FromRow)]
+pub struct Game {
+    pub pubkey: String,
 }
