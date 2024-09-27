@@ -3,7 +3,25 @@ import { Program } from "@coral-xyz/anchor";
 import { SecretHitler } from "../target/types/secret_hitler";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { assert } from "chai";
-
+const confirmTx = async (signature: string) => {
+  const latestBlockhash = await anchor
+    .getProvider()
+    .connection.getLatestBlockhash();
+  await anchor.getProvider().connection.confirmTransaction(
+    {
+      signature,
+      ...latestBlockhash,
+    },
+    "confirmed",
+  );
+};
+async function airdrop(
+  connection: anchor.web3.Connection,
+  address: PublicKey,
+  amount = 10 * LAMPORTS_PER_SOL,
+) {
+  await connection.requestAirdrop(address, amount).then(confirmTx);
+}
 describe("secret-hitler", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
@@ -12,8 +30,8 @@ describe("secret-hitler", () => {
   let maxPlayers = 6;
   let turnDuration = new anchor.BN(120);
 
-  let depositAmount = new anchor.BN(LAMPORTS_PER_SOL);
-  let betAmount = new anchor.BN(0.5 * LAMPORTS_PER_SOL);
+  let depositAmount = new anchor.BN(0.01 * LAMPORTS_PER_SOL);
+  let betAmount = new anchor.BN(0.05 * LAMPORTS_PER_SOL);
 
   let host = anchor.web3.Keypair.generate();
 
@@ -372,7 +390,7 @@ describe("secret-hitler", () => {
         gameData,
       })
       .signers([president])
-      .rpc({ skipPreflight: true })
+      .rpc({ skipPreflight: false })
       .then(confirmTx);
 
     let gameAfter = await program.account.gameData.fetch(gameData);
@@ -406,7 +424,7 @@ describe("secret-hitler", () => {
         gameData,
       })
       .signers([chancellor])
-      .rpc({ skipPreflight: true })
+      .rpc({ skipPreflight: false })
       .then(confirmTx);
 
     let gameAfter = await program.account.gameData.fetch(gameData);
@@ -465,7 +483,7 @@ describe("secret-hitler", () => {
   it("Vote chancellor", async () => {
     let game = await program.account.gameData.fetch(gameData);
     await Promise.all(
-      players.slice(2, 4).map(async (player) => {
+      players.slice(1, 4).map(async (player) => {
         if (player.publicKey.toString() === president.publicKey.toString()) {
           return;
         }
@@ -512,7 +530,7 @@ describe("secret-hitler", () => {
         gameData,
       })
       .signers([president])
-      .rpc({ skipPreflight: true })
+      .rpc({ skipPreflight: false })
       .then(confirmTx);
 
     let gameAfter = await program.account.gameData.fetch(gameData);
@@ -597,23 +615,3 @@ describe("secret-hitler", () => {
     );
   });
 });
-
-const confirmTx = async (signature: string) => {
-  const latestBlockhash = await anchor
-    .getProvider()
-    .connection.getLatestBlockhash();
-  await anchor.getProvider().connection.confirmTransaction(
-    {
-      signature,
-      ...latestBlockhash,
-    },
-    "confirmed",
-  );
-};
-async function airdrop(
-  connection: anchor.web3.Connection,
-  address: PublicKey,
-  amount = 10 * LAMPORTS_PER_SOL,
-) {
-  await connection.requestAirdrop(address, amount).then(confirmTx);
-}
