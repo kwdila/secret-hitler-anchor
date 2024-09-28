@@ -2,8 +2,6 @@ use crate::db::init_db;
 use anyhow::Result;
 use axum::{Extension, Router};
 use sqlx::SqlitePool;
-use std::net::SocketAddr;
-use 
 
 mod db;
 mod rest;
@@ -25,11 +23,8 @@ async fn main() -> Result<()> {
     let connection_pool = init_db().await?;
     let app = router(connection_pool);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
-
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await?;
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
+    axum::serve(listener, app).await?;
 
     Ok(())
 }

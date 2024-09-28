@@ -1,34 +1,25 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, SqlitePool};
-use solana_sdk::{
-     instruction::Instruction,
-     message::Message,
-     pubkey::Pubkey,
-     signature::{Keypair, Signer},
-     transaction::Transaction,
-};
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Game {
-    pub id: i32,
+    pub id: Option<i32>,
     pub pubkey: String,
 }
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Player {
-    pub id: i32,
+    pub id: Option<i32>,
     pub pubkey: String,
     pub role: u8,
     pub game_id: i32,
 }
-
 pub async fn init_db() -> Result<SqlitePool> {
     let database_url = std::env::var("DATABASE_URL")?;
     let connection_pool = SqlitePool::connect(&database_url).await?;
     sqlx::migrate!().run(&connection_pool).await?;
     Ok(connection_pool)
 }
-
 pub async fn all_games(connection_pool: &SqlitePool) -> Result<Vec<Game>> {
     let games = sqlx::query_as::<_, Game>("SELECT * FROM games ORDER BY id")
         .fetch_all(connection_pool)
@@ -37,14 +28,14 @@ pub async fn all_games(connection_pool: &SqlitePool) -> Result<Vec<Game>> {
     Ok(games)
 }
 pub async fn game_by_id(connection_pool: &SqlitePool, id: i32) -> Result<Game> {
-    Ok(sqlx::query_as::<_, Game>("SELECT * FROM books WHERE id=$1")
+    Ok(sqlx::query_as::<_, Game>("SELECT * FROM games WHERE id=$1")
         .bind(id)
         .fetch_one(connection_pool)
         .await?)
 }
 pub async fn game_by_pubkey(connection_pool: &SqlitePool, pubkey: &str) -> Result<Game> {
     Ok(
-        sqlx::query_as::<_, Game>("SELECT * FROM books WHERE pubkey=$1")
+        sqlx::query_as::<_, Game>("SELECT * FROM games WHERE pubkey=$1")
             .bind(pubkey)
             .fetch_one(connection_pool)
             .await?,
@@ -52,12 +43,12 @@ pub async fn game_by_pubkey(connection_pool: &SqlitePool, pubkey: &str) -> Resul
 }
 pub async fn add_game<S: ToString>(connection_pool: &SqlitePool, pubkey: S) -> Result<i32> {
     let pubkey = pubkey.to_string();
-    let id = sqlx::query("INSERT INTO books (pubkey) VALUES ($1) RETURNING id")
+    let id = sqlx::query("INSERT INTO games (pubkey) VALUES ($1) RETURNING id")
         .bind(pubkey)
         .fetch_one(connection_pool)
         .await?
         .get(0);
-    
+
     Ok(id)
 }
 pub async fn player_by_pubkey(connection_pool: &SqlitePool, pubkey: &str) -> Result<Player> {

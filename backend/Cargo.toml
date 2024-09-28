@@ -5,10 +5,14 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.89"
-axum = "0.6.20"
+axum = "0.7.7"
 dotenv = "0.15.0"
 serde = "1.0.210"
 solana-client = "2.0.11"
 solana-sdk = "2.0.11"
-sqlx = { version = "0.6.3", features = ["runtime-tokio-native-tls", "sqlite"] }
+sqlx = { version = "0.8.2", features = ["runtime-tokio-native-tls", "sqlite"] }
 tokio = { version = "1.40.0", features = ["full"] }
+
+[patch.crates-io.curve25519-dalek]
+git = "https://github.com/solana-labs/curve25519-dalek.git"
+rev = "c14774464c4d38de553c6ef2f48a10982c1b4801"

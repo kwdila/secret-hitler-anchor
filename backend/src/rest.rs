@@ -2,99 +2,128 @@ use crate::db::{
     add_game, add_player, all_games, game_by_id, game_by_pubkey, player_by_pubkey,
     players_by_game_id, Game, Player,
 };
-use axum::extract::Path;
-use axum::http::StatusCode;
-use axum::routing::{get, post};
-use axum::{extract, Extension, Json, Router};
-use solana_sdk::pubkey;
+use axum::{
+    extract::{Extension, Json, Path},
+    http::StatusCode,
+    response::IntoResponse,
+    routing::{get, post},
+    Router,
+};
 use sqlx::SqlitePool;
 
 pub fn games_service() -> Router {
     Router::new()
-        .route("/", get(all_games))
-        .route("/:id", get(game_by_id))
-        .route("/:pubkey", get(game_by_pubkey))
-        .route("/add", post(add_game))
-}
-pub fn players_service() -> Router {
-    Router::new()
-        .route("/:id", get(players_by_game_id))
-        .route("/:pubkey", get(player_by_pubkey))
-        .route("/add", post(add_player))
+        .route("/", get(get_all_games).post(add_new_game))
+        .route("/id/:id", get(get_game_by_id))
+        .route("/pubkey/:pubkey", get(get_game_by_pubkey))
 }
 
-async fn get_all_games(
-    Extension(cnn): Extension<SqlitePool>,
-) -> Result<Json<Vec<Game>>, StatusCode> {
-    if let Ok(games) = all_games(&cnn).await {
-        Ok(Json(games))
-    } else {
-        Err(StatusCode::SERVICE_UNAVAILABLE)
+pub fn players_service() -> Router {
+    Router::new()
+        .route("/id/:id", get(get_players_by_game_id))
+        .route("/pubkey/:pubkey", get(get_player_by_pubkey))
+        .route("/", post(add_new_player))
+}
+
+async fn get_all_games(Extension(pool): Extension<SqlitePool>) -> impl IntoResponse {
+    match all_games(&pool).await {
+        Ok(games) => Json(games).into_response(),
+        Err(err) => {
+            eprintln!("Error fetching games: {}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch games").into_response()
+        }
     }
 }
 
 async fn get_game_by_id(
-    Extension(cnn): Extension<SqlitePool>,
+    Extension(pool): Extension<SqlitePool>,
     Path(id): Path<i32>,
-) -> Result<Json<Game>, StatusCode> {
-    if let Ok(game) = game_by_id(&cnn, id).await {
-        Ok(Json(game))
-    } else {
-        Err(StatusCode::SERVICE_UNAVAILABLE)
+) -> impl IntoResponse {
+    match game_by_id(&pool, id).await {
+        Ok(game) => Json(game).into_response(),
+        Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
 }
+
 async fn get_game_by_pubkey(
-    Extension(cnn): Extension<SqlitePool>,
-    Path(pubkey): Path<&str>,
-) -> Result<Json<Game>, StatusCode> {
-    if let Ok(game) = game_by_pubkey(&cnn, pubkey).await {
-        Ok(Json(game))
-    } else {
-        Err(StatusCode::SERVICE_UNAVAILABLE)
+    Extension(pool): Extension<SqlitePool>,
+    Path(pubkey): Path<String>,
+) -> impl IntoResponse {
+    match game_by_pubkey(&pool, &pubkey).await {
+        Ok(game) => Json(game).into_response(),
+        Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
 }
 
 async fn add_new_game(
-    Extension(cnn): Extension<SqlitePool>,
-    extract::Json(game): extract::Json<Game>,
-) -> Result<Json<i32>, StatusCode> {
-    if let Ok(new_id) = crate::db::add_game(&cnn, &game.pubkey).await {
-        Ok(Json(new_id))
-    } else {
-        Err(StatusCode::SERVICE_UNAVAILABLE)
+    Extension(pool): Extension<SqlitePool>,
+    Json(game): Json<Game>, // Directly use game instead of mutable
+) -> impl IntoResponse {
+    if game.pubkey.len() != 32 {
+        return (
+            StatusCode::BAD_REQUEST,
+            "pubkey must be exactly 32 characters long",
+        )
+            .into_response();
+    }
+
+    let result = add_game(&pool, &game.pubkey).await;
+
+    match result {
+        Ok(new_id) => Json(new_id).into_response(),
+        Err(err) => {
+            eprintln!("Error adding game: {}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to add game").into_response()
+        }
     }
 }
 
 async fn get_players_by_game_id(
-    Extension(cnn): Extension<SqlitePool>,
+    Extension(pool): Extension<SqlitePool>,
     Path(id): Path<i32>,
-) -> Result<Json<Vec<Player>>, StatusCode> {
-    if let Ok(players) = players_by_game_id(&cnn, id).await {
-        Ok(Json(players))
-    } else {
-        Err(StatusCode::SERVICE_UNAVAILABLE)
+) -> impl IntoResponse {
+    match players_by_game_id(&pool, id).await {
+        Ok(players) => Json(players).into_response(),
+        Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
 }
+
 async fn get_player_by_pubkey(
-    Extension(cnn): Extension<SqlitePool>,
-    Path(pubkey): Path<&str>,
-) -> Result<Json<Player>, StatusCode> {
-    if let Ok(player) = player_by_pubkey(&cnn, pubkey).await {
-        Ok(Json(player))
-    } else {
-        Err(StatusCode::SERVICE_UNAVAILABLE)
+    Extension(pool): Extension<SqlitePool>,
+    Path(pubkey): Path<String>,
+) -> impl IntoResponse {
+    match player_by_pubkey(&pool, &pubkey).await {
+        Ok(player) => Json(player).into_response(),
+        Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
 }
 
 async fn add_new_player(
-    Extension(cnn): Extension<SqlitePool>,
-    extract::Json(player): extract::Json<Player>,
-) -> Result<Json<i32>, StatusCode> {
-    if let Ok(new_id) =
-        crate::db::add_player(&cnn, &player.pubkey, player.role, player.game_id).await
-    {
-        Ok(Json(new_id))
-    } else {
-        Err(StatusCode::SERVICE_UNAVAILABLE)
+    Extension(pool): Extension<SqlitePool>,
+    Json(player): Json<Player>,
+) -> impl IntoResponse {
+    if player.pubkey.len() != 32 {
+        return (
+            StatusCode::BAD_REQUEST,
+            "pubkey must be exactly 32 characters long",
+        )
+            .into_response();
+    }
+    if ![0, 1, 2].contains(&player.role) {
+        return (
+            StatusCode::BAD_REQUEST,
+            "player role must one of 0,1, and 2",
+        )
+            .into_response();
+    }
+
+    let result = add_player(&pool, &player.pubkey, player.role, player.game_id).await;
+
+    match result {
+        Ok(new_id) => Json(new_id).into_response(),
+        Err(err) => {
+            eprintln!("Error adding player: {}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to add player").into_response()
+        }
     }
 }

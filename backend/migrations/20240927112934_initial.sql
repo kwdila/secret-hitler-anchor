@@ -1,11 +1,12 @@
--- Add migration script here
-CREATE TABLE games {
+CREATE TABLE games (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    pubkey CHAR(32) NOT NULL UNIQUE,
-}
+    pubkey CHAR(32) NOT NULL UNIQUE
+);
 
-CREATE TABLE players {
+CREATE TABLE players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     pubkey CHAR(32) NOT NULL,
+    game_id INTEGER NOT NULL,
+    role INTEGER NOT NULL,
     FOREIGN KEY(game_id) REFERENCES games(id)
-}-- Add migration script here
+);

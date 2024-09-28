@@ -268,16 +268,24 @@ describe("secret-hitler", () => {
     );
   });
   it("try to eliminate player", async () => {
-    await program.methods
-      .eliminateInactivePlayer()
-      .accountsPartial({
-        player: host.publicKey,
-        gameData,
-        nomination: null,
-      })
-      .signers([host])
-      .rpc({ skipPreflight: true })
-      .then(confirmTx);
+    let result = "should fail";
+    try {
+      await program.methods
+        .eliminateInactivePlayer()
+        .accountsPartial({
+          player: host.publicKey,
+          gameData,
+          nomination: null,
+        })
+        .signers([host])
+        .rpc({ skipPreflight: false })
+        .then(confirmTx);
+    } catch (e) {
+      let error = anchor.AnchorError.parse(e.logs);
+      assert.strictEqual(error.error.errorCode.code, "TurnNotFinished");
+      result = "it failed";
+    }
+    assert.strictEqual(result, "it failed");
   });
   it("Nominate chancellor", async () => {
     let game = await program.account.gameData.fetch(gameData);
