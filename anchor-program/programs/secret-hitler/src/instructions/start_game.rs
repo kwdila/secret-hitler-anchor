@@ -4,6 +4,7 @@ use crate::{constants::MIN_PLAYERS, state::GameData, GameErrorCode, GameState, P
 
 #[derive(Accounts)]
 pub struct StartGame<'info> {
+    // pub server: Signer<'info>,
     #[account(mut)]
     pub host: Signer<'info>,
     #[account(
@@ -29,11 +30,3 @@ impl<'info> StartGame<'info> {
         Ok(())
     }
 }
-
-
-/* 
-try{
-backend
-}
-anchor program 
-*/
