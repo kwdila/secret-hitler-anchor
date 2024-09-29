@@ -9,13 +9,19 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use base64::{engine::general_purpose::STANDARD, Engine};
+use bincode::serialize;
+use serde_json::{json, Value};
 use sqlx::SqlitePool;
+
+use crate::solana::get_start_game_ix;
 
 pub fn games_service() -> Router {
     Router::new()
-        .route("/", get(get_all_games).post(add_new_game))
+        .route("/", get(get_all_games))
         .route("/id/:id", get(get_game_by_id))
         .route("/pubkey/:pubkey", get(get_game_by_pubkey))
+        .route("/add", post(add_new_game))
 }
 
 pub fn players_service() -> Router {
@@ -57,25 +63,49 @@ async fn get_game_by_pubkey(
 
 async fn add_new_game(
     Extension(pool): Extension<SqlitePool>,
-    Json(game): Json<Game>, // Directly use game instead of mutable
-) -> impl IntoResponse {
+    Json(game): Json<Game>,
+) -> Result<impl IntoResponse, (StatusCode, Json<Value>)> {
     if game.pubkey.len() != 32 {
-        return (
+        return Err((
             StatusCode::BAD_REQUEST,
-            "pubkey must be exactly 32 characters long",
+            Json(json!({"error": "pubkey must be exactly 32 characters long"})),
+        ));
+    }
+
+    // Add the game to the database
+    add_game(&pool, &game.pubkey, &game.host_key)
+        .await
+        .map_err(|err| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": format!("Failed to add game: {}", err)})),
+            )
+        })?;
+
+    // Get the start game transaction
+    let tx = get_start_game_ix(&game.host_key).map_err(|err| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"error": format!("Failed to create start game transaction: {}", err)})),
         )
-            .into_response();
-    }
+    })?;
 
-    let result = add_game(&pool, &game.pubkey).await;
+    // Serialize the transaction
+    let serialized_transaction = serialize(&tx).map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({"error": "Failed to serialize transaction"})),
+        )
+    })?;
 
-    match result {
-        Ok(new_id) => Json(new_id).into_response(),
-        Err(err) => {
-            eprintln!("Error adding game: {}", err);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to add game").into_response()
-        }
-    }
+    // Encode the serialized transaction
+    let encoded_transaction = STANDARD.encode(serialized_transaction);
+
+    // Return the successful response
+    Ok(Json(json!({
+        "transaction": encoded_transaction,
+        "message": "game created"
+    })))
 }
 
 async fn get_players_by_game_id(

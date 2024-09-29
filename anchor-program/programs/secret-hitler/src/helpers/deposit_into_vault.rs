@@ -13,7 +13,7 @@ pub fn deposit_into_vault<'info>(
         from: from.to_account_info(),
         to: vault.to_account_info(), //this is checked in game_data account constraints
     };
-    
+
     let ctx = CpiContext::new(system_program.to_account_info(), accounts);
     transfer(ctx, amount)?;
     Ok(())

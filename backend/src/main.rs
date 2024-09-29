@@ -6,7 +6,7 @@ use sqlx::SqlitePool;
 mod db;
 mod rest;
 pub mod role;
-
+pub mod solana;
 fn router(connection_pool: SqlitePool) -> Router {
     Router::new()
         // Nest service allows you to attach another router to a URL base.

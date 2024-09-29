@@ -1,6 +1,4 @@
-use anchor_lang::{
-    prelude::*,
-};
+use anchor_lang::prelude::*;
 
 use crate::{
     helpers::deposit_into_vault,
