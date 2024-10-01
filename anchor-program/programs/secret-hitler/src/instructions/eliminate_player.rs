@@ -36,7 +36,7 @@ impl<'info> EliminatePlayer<'info> {
     pub fn eliminate_player(&mut self) -> Result<()> {
         let game = &mut self.game_data;
 
-        let current_time = Clock::get()?.unix_timestamp;
+        let current_time = Clock::get()?.unix_timestamp; 
         let turn_start_time = game
             .turn_started_at
             .ok_or(GameErrorCode::TurnStartTimeNotFound)?;
