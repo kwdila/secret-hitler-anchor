@@ -16,7 +16,7 @@ impl Role {
             _ => None,
         }
     }
-    pub fn into(&self) -> u8 {
+    pub fn to_num(&self) -> u8 {
         match self {
             Role::Hitler => 0,
             Role::Fascist => 1,

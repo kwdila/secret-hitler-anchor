@@ -7,6 +7,7 @@ CREATE TABLE games (
 CREATE TABLE players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     pubkey CHAR(32) NOT NULL,
+    game_key CHAR(32) NOT NULL,
     game_id INTEGER NOT NULL,
     role INTEGER NOT NULL,
     FOREIGN KEY(game_id) REFERENCES games(id)

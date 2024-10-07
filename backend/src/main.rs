@@ -7,7 +7,6 @@ mod db;
 mod rest;
 mod role;
 mod solana;
-mod view;
 
 fn router(connection_pool: SqlitePool) -> Router {
     Router::new()
@@ -19,6 +18,7 @@ fn router(connection_pool: SqlitePool) -> Router {
         // Add the connection pool as a "layer", available for dependency injection.
         .layer(Extension(connection_pool))
 }
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();

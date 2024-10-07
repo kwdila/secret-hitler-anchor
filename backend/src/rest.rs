@@ -1,6 +1,6 @@
 use crate::db::{
-    add_game, add_player, all_games, game_by_id, game_by_pubkey, player_by_pubkey,
-    players_by_game_id, Game, Player,
+    add_game, add_many_players, add_player, all_games, game_by_id, game_id_by_pubkey,
+    player_by_pubkey, players_by_game_id, Game, Player,
 };
 use axum::{
     extract::{Extension, Json, Path},
@@ -14,7 +14,7 @@ use bincode::serialize;
 use serde_json::{json, Value};
 use sqlx::SqlitePool;
 
-use crate::solana::get_start_game_ix;
+use crate::solana::{get_start_game_ix, set_player_roles};
 
 pub fn games_service() -> Router {
     Router::new()
@@ -55,7 +55,7 @@ async fn get_game_by_pubkey(
     Extension(pool): Extension<SqlitePool>,
     Path(pubkey): Path<String>,
 ) -> impl IntoResponse {
-    match game_by_pubkey(&pool, &pubkey).await {
+    match game_id_by_pubkey(&pool, &pubkey).await {
         Ok(game) => Json(game).into_response(),
         Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
@@ -82,13 +82,21 @@ async fn add_new_game(
             )
         })?;
 
+    let client =
+        solana_client::nonblocking::rpc_client::RpcClient::new("http://localhost:8899".to_string());
+    let players = set_player_roles(&game.pubkey, &client).await.unwrap();
+
+    add_many_players(&pool, players).await.unwrap();
+
     // Get the start game transaction
-    let tx = get_start_game_ix(&game.host_key).map_err(|err| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({"error": format!("Failed to create start game transaction: {}", err)})),
-        )
-    })?;
+    let tx = get_start_game_ix(&game.host_key, &client)
+        .await
+        .map_err(|err| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": format!("Failed to create start game transaction: {}", err)})),
+            )
+        })?;
 
     // Serialize the transaction
     let serialized_transaction = serialize(&tx).map_err(|_| {
@@ -128,7 +136,7 @@ async fn get_player_by_pubkey(
     }
 }
 
-async fn add_new_player(
+pub async fn add_new_player(
     Extension(pool): Extension<SqlitePool>,
     Json(player): Json<Player>,
 ) -> impl IntoResponse {
@@ -147,7 +155,9 @@ async fn add_new_player(
             .into_response();
     }
 
-    let result = add_player(&pool, &player.pubkey, player.role, player.game_id).await;
+    let game_id = game_id_by_pubkey(&pool, &player.game_key).await.unwrap();
+
+    let result = add_player(&pool, &player.pubkey, player.role, game_id).await;
 
     match result {
         Ok(new_id) => Json(new_id).into_response(),

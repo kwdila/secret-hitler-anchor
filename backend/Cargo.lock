@@ -640,6 +640,7 @@ dependencies = [
  "base64 0.22.1",
  "bincode",
  "dotenv",
+ "rand 0.8.5",
  "secret_hitler",
  "serde",
  "serde_json",
