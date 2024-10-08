@@ -1,6 +1,16 @@
 # Secret Hitler Board Game on Solana
 
-This document outlines the on-chain implementation of the popular board game Secret Hitler using Solana's blockchain. The game integrates off-chain components for role assignment and deck shuffling, with future plans to incorporate Zero-Knowledge Proofs (ZKPs) for complete on-chain management.
+onchain implementation of the popular board game Secret Hitler using Solana's blockchain. The game integrates off-chain components for role assignment and deck shuffling.
+
+## Player Inactivity
+
+The official game rules have been cafully followed and some gaps have been filled such as player inactivity. Games can be set up with a required entry deposit which will be returned if the player completes the game regardless of game outcome. If a player is inactive past there turn period, then over players (or any signer) is insentivesed to call the "[Eliminate Player](./anchor-program/programs/secret-hitler/src/instructions/eliminate_player.rs) instruction which automatically kicks out inactive players from the game and their deposit and/or bet will be later distributed amongst the remaining active players at the end of the game.
+
+This solutions uses game theory to eliminate the need for an offchain game server or cron job to continuesly listen to the game events.
+
+## Solana-SDK
+
+The [solana-sdk](./backend/src/solana.rs) has been utilized to interact with the anchor program and partially sign a transaction. This is to make sure that the game can only begin when the needed information has been recorded in the SQLite database in memory.
 
 ## Game Overview
 
@@ -9,83 +19,19 @@ Program on Devnet: FxKWd5DzXvHPVfrGo3DvXgTeG25TGUGUAFvjQ1zSMp1B
 ### Key Features
 
 - **Inactivity Management**: On-chain functionality to handle inactive players and manage their removal, reducing reliance on external servers or cron jobs.
-- **Off-Chain Role Assignment and Deck Shuffling**: Managed via a Rust server to keep critical game data secure. Future enhancements may include ZKPs for on-chain processing.
+- **Off-Chain Role Assignment and Deck Shuffling**: Managed via a Rust server to keep critical game data secure. Future enhancements may include ZKPs for on-chain processing. (In progress)
 
 ### Testing
 
 - **Frameworks Used**: Solana test validator, [TypeScript test files](./anchor-program/tests/secret-hitler.ts), and [Rust test files](./anchor-program/programs/secret-hitler/tests/).
 
-### Client and Server Integration
-
-- **JS Client**: Communicates with the Solana Anchor program and uses session keys for auto-approving transactions.
-- **Session Keys**: Optional feature allowing automatic transaction approval for a session of up to 23 hours.
-
 ## Setup Instructions
 
-### Solana Dependencies
-
-1. **Install Solana CLI**
-
-   ```bash
-   sh -c "$(curl -sSfL https://release.solana.com/v1.16.18/install)"
-   ```
-
-2. **Install Anchor CLI**: Follow the guide [here](https://project-serum.github.io/anchor/getting-started/installation.html).
-
-### Anchor Program
-
-1. **Build the Program**
-
-   ```bash
-   cd program
-   anchor build
-   ```
-
-2. **Deploy the Program**
-
-   ```bash
-   anchor deploy
-   ```
-
-3. **Update Program ID**: Copy the program ID from the terminal and update it in:
-
-   - `lib.rs`
-   - `anchor.toml`
-   - Unity project (AnchorService)
-   - JavaScript client (anchor.ts)
-
-4. **Rebuild and Redeploy**
-   ```bash
-   anchor build
-   anchor deploy
-   ```
-
-### Next.js Client
-
-1. **Install Node.js**: Download and install [Node.js](https://nodejs.org/en/download/).
-
-2. **Update Program ID**: Add the program ID to `app/utils/anchor.ts`.
-
-3. **Start the Client**
-
-   ```bash
-   cd app
-   yarn install
-   yarn dev
-   ```
-
-4. **Update Types**: After modifying the Anchor program, copy the updated types from `target/idl` into the client for compatibility.
-
-### Connecting to Localhost (Optional)
-
-- **Unity Setup**: For testing on localhost, configure the wallet holder game object with:
-  - HTTP: `http://localhost:8899`
-  - WebSocket: `ws://localhost:8900`
-
-### Session Keys
-
-- **Functionality**: Allows transactions to be auto-approved for up to 23 hours, reducing manual transaction handling.
-- **Expiry**: Session keys expire after 23 hours; players must renew them to continue using the feature.
+```bash
+cd anchor-program
+anchor build
+anchor test
+```
 
 ### Future Enhancements
 
@@ -94,6 +40,4 @@ Program on Devnet: FxKWd5DzXvHPVfrGo3DvXgTeG25TGUGUAFvjQ1zSMp1B
 
 ## Important Notes
 
-- **Audit Status**: Neither the program nor session keys are audited. Use at your own risk.
-
-This setup offers a comprehensive starting point for on-chain games with off-chain elements, leveraging blockchain technology for secure and efficient game management.
+- **Progress Status**: onchain anchor program is finished and tested. Rust Axum backend in development and has made significant progress. front-end is not yet implemented
