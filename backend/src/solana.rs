@@ -1,4 +1,3 @@
-use anchor_lang::AccountDeserialize;
 use anyhow::{anyhow, Ok, Result as AnyhowResult};
 use rand::distributions::Uniform;
 use rand::{thread_rng, Rng};
@@ -19,7 +18,7 @@ pub async fn get_start_game_ix(
     host_key_str: &str,
     client: &RpcClient,
 ) -> AnyhowResult<Transaction> {
-    let program_id = Pubkey::try_from("FxKWd5DzXvHPVfrGo3DvXgTeG25TGUGUAFvjQ1zSMp1B").unwrap();
+    let program_id = Pubkey::try_from("6VYMcKKWTWucWArbJ8soisLHaNqA4PEHPUS5jDo1SyBn").unwrap();
 
     let host_key = Pubkey::from_str(host_key_str)?;
     let server_key = keypair_from_seed(&[
@@ -61,10 +60,13 @@ fn init_game(host: Pubkey, game_key: Pubkey, server: Pubkey) -> Instruction {
 }
 
 pub async fn set_player_roles(game_key: &str, client: &RpcClient) -> AnyhowResult<Vec<Player>> {
-    let game_key = Pubkey::from_str(game_key)?;
+    let game_key = Pubkey::from_str(game_key).expect("failed to get pubkey from game_key str");
 
-    let game_data = client.get_account_data(&game_key).await?;
-    let game: GameData = GameData::try_deserialize(&mut game_data.as_slice())?;
+    let game_account = client.get_account(&game_key).await.unwrap();
+    let game: GameData =
+        anchor_lang::AccountDeserialize::try_deserialize(&mut game_account.data.as_slice())
+            .expect("failed to deserialise game data account");
+
     let players = &game.active_players;
     let player_count = &game.start_player_count.unwrap();
     let max_liberals: u8 = PlayerCount::liberal_count(player_count);

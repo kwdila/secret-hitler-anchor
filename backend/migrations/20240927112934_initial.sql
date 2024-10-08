@@ -1,6 +1,6 @@
 CREATE TABLE games (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    pubkey CHAR(32) NOT NULL UNIQUE,
+    pubkey CHAR(32),
     host_key CHAR(32) NOT NULL UNIQUE
 );
 

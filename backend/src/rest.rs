@@ -65,13 +65,6 @@ async fn add_new_game(
     Extension(pool): Extension<SqlitePool>,
     Json(game): Json<Game>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<Value>)> {
-    if game.pubkey.len() != 32 {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(json!({"error": "pubkey must be exactly 32 characters long"})),
-        ));
-    }
-
     // Add the game to the database
     add_game(&pool, &game.pubkey, &game.host_key)
         .await
@@ -84,7 +77,10 @@ async fn add_new_game(
 
     let client =
         solana_client::nonblocking::rpc_client::RpcClient::new("http://localhost:8899".to_string());
-    let players = set_player_roles(&game.pubkey, &client).await.unwrap();
+
+    let players = set_player_roles(&game.pubkey.to_string().trim(), &client)
+        .await
+        .unwrap();
 
     add_many_players(&pool, players).await.unwrap();
 
@@ -136,7 +132,7 @@ async fn get_player_by_pubkey(
     }
 }
 
-pub async fn add_new_player(
+async fn add_new_player(
     Extension(pool): Extension<SqlitePool>,
     Json(player): Json<Player>,
 ) -> impl IntoResponse {
